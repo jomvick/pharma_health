@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/medicine.dart';
 import '../models/sale.dart';
 import 'medicine_provider.dart';
