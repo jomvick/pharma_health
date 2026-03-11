@@ -1,0 +1,350 @@
+CAHIER DE CHARGES
+PharmacyManager BF
+Systeme de Gestion de Pharmacie - Fullstack
+Projet
+Pharmacy Management
+Module
+CS27 - Fullstack Intensive
+Groupe
+Groupe 1
+Membres
+Franck MEDA, Balkissa ILBOUDO, Josue KONDOMBO, Fabiana YANOGO, Arnaud KIENDREBEOGO
+Enseignant
+Lebian Wilfried NIKIEMA, PhD
+Annee academique
+2025-2026
+Date de soutenance
+16 Mars 2026 - 18h15 - Cisco Room
+Duree projet
+10 jours intensifs
+Table des matieres
+1. Presentation du projet
+1.1 Contexte
+La gestion manuelle des pharmacies en Afrique de l'Ouest reste la norme dans de nombreux etablissements. Elle engendre des ruptures de stock non detectees a temps, des pertes liees aux medicaments expires, des erreurs de caisse et une absence totale de traçabilite. PharmacyManager BF est une solution fullstack (web + mobile + API) destinee a digitaliser completement les operations d'une officine.
+1.2 Objectif general
+Concevoir et deployer un systeme d'information complet pour la gestion d'une pharmacie : inventaire des medicaments, suivi des dates d'expiration, enregistrement des ventes, alertes de stock bas, et tableau de bord analytique pour l'administration.
+1.3 Perimetre
+Application web d'administration (NextJS)
+Application mobile pour les pharmaciens et caissiers (Flutter)
+API REST backend (NestJS)
+Base de donnees (MongoDB)
+Deploiement en production
+2. Stack technologique
+Le stack est impose par le cahier des charges pedagogique du CS27. Les choix specifiques au sein des options autorisees sont justifies ci-dessous.
+Couche
+Technologie
+Justification
+Backend
+NodeJS + NestJS
+Architecture modulaire, TypeScript natif, decorateurs, DI
+Frontend Web
+NextJS 14
+SSR, routing App Router, performance, SEO
+Mobile
+Flutter
+Cross-platform iOS/Android, un seul codebase
+Base de donnees
+MongoDB
+Schema flexible pour medicaments, stock, transactions
+Authentification
+JWT + Bcrypt
+Stateless, securise, compatible mobile et web
+API Docs
+Swagger (OpenAPI)
+Documentation auto-generee via NestJS decorateurs
+Deploiement
+Railway / Render + Vercel
+CI/CD simplifie, tier gratuit suffisant pour le projet
+3. Gestion des roles et authentification
+3.1 Roles utilisateurs
+Le systeme implemente une authentification JWT avec trois niveaux d'acces distincts.
+Role
+Permissions
+Admin
+Acces total : gestion utilisateurs, configuration systeme, rapports globaux, suppression
+Pharmacien
+Gestion inventaire, ventes, alertes stock, consultation rapports
+Caissier
+Enregistrement ventes uniquement, consultation stock, impression recu
+3.2 Authentification
+JWT stocke en HttpOnly cookie (web) et SecureStorage (mobile)
+Refresh token avec expiration 7 jours, access token 15 minutes
+Bcrypt pour le hashage des mots de passe (salt rounds: 12)
+Middleware de protection de routes par role sur NestJS (Guards)
+Deconnexion forcee en cas de token invalide ou expire
+4. Application Web - Interface Admin (NextJS)
+L'interface web est destinee exclusivement aux administrateurs et pharmaciens. Elle offre une vision globale du systeme et les fonctionnalites de configuration.
+4.1 Authentification Web
+Fonctionnalite
+Description
+Page de connexion
+Formulaire email/mot de passe, gestion des erreurs, redirection par role
+Deconnexion
+Suppression du JWT, redirection vers /login
+Protection de routes
+Middleware Next.js verifiant le token avant rendu de chaque page protegee
+Recuperation mot de passe
+Envoi email avec lien reset token (expiration 1h)
+4.2 Gestion de l'inventaire
+Fonctionnalite
+Description
+Liste des medicaments
+Tableau paginé avec tri, recherche par nom/categorie/fournisseur, filtre par statut
+Ajout medicament
+Formulaire : nom, DCI, forme, dosage, categorie, fournisseur, prix achat, prix vente, stock initial, seuil alerte
+Modification medicament
+Edition inline ou modale, historique des modifications
+Suppression medicament
+Suppression logique (soft delete), medicament masque mais donnees conservees
+Import CSV
+Import en masse via fichier CSV avec validation et rapport d'erreurs
+Export Excel
+Export de l'inventaire complet ou filtre au format .xlsx
+4.3 Suivi des dates d'expiration
+Fonctionnalite
+Description
+Saisie des lots
+Chaque entree de stock est liee a un numero de lot et une date d'expiration
+Vue calendrier expiration
+Visualisation des lots expirés, expirant dans 30j, 60j, 90j
+Alerte expiration
+Notification dans le dashboard pour les lots expirant dans moins de 30 jours
+Rapport mensuels expiration
+Liste des medicaments retires pour expiration avec quantite et valeur perdue
+Retrait automatique
+Medicament expire passe automatiquement au statut 'Retire du stock'
+4.4 Gestion des ventes
+Fonctionnalite
+Description
+Historique des ventes
+Liste complete des transactions avec filtre par date, caissier, medicament
+Detail d'une vente
+Vue complete : medicaments vendus, quantites, prix unitaires, total, caissier, horodatage
+Annulation de vente
+Annulation possible sous 24h avec justification obligatoire et restauration du stock
+Rapport de ventes
+CA journalier, hebdomadaire, mensuel avec graphiques
+Top medicaments vendus
+Classement des medicaments par volume de ventes sur periode choisie
+4.5 Alertes de stock bas
+Fonctionnalite
+Description
+Seuil d'alerte configurable
+Chaque medicament a un seuil d'alerte personnalisable (defaut: 10 unites)
+Dashboard alertes
+Widget dedie affichant en temps reel tous les medicaments sous le seuil
+Notification email
+Email automatique a l'admin quand un medicament passe sous le seuil
+Historique des alertes
+Log de toutes les alertes declenchees avec date et niveau de stock
+4.6 Gestion des utilisateurs
+Fonctionnalite
+Description
+Creer un compte utilisateur
+Admin cree les comptes : nom, email, role, mot de passe temporaire
+Modifier un utilisateur
+Changement de role, de mot de passe, de statut actif/inactif
+Desactiver un compte
+Desactivation sans suppression - l'utilisateur ne peut plus se connecter
+Journal d'activite
+Log de chaque action utilisateur : connexion, vente, modification inventaire
+4.7 Tableau de bord analytique
+Fonctionnalite
+Description
+KPIs en temps reel
+Nombre de ventes du jour, CA du jour, stock total, nombre d'alertes actives
+Graphique CA mensuel
+Courbe du chiffre d'affaires sur les 12 derniers mois
+Medicaments critiques
+Widget listant les 10 medicaments les plus proches du seuil d'alerte
+Prochaines expirations
+Widget listant les lots expirant dans les 30 prochains jours
+Rapport telechargeable
+Generation PDF du rapport mensuel complet
+5. Application Mobile - Flutter
+L'application mobile est utilisee par les pharmaciens et caissiers au comptoir. Elle est optimisee pour la rapidite de saisie et la consultation en mobilite.
+5.1 Authentification Mobile
+Fonctionnalite
+Description
+Connexion
+Email/mot de passe, token stocke dans FlutterSecureStorage
+Persistence de session
+Refresh token silencieux, reconnexion automatique si token valide
+Deconnexion
+Effacement du token local, retour ecran de login
+Biometrie (optionnel)
+Deverrouillage par empreinte si disponible sur l'appareil
+5.2 Point de Vente (POS) Mobile
+Fonctionnalite
+Description
+Recherche medicament
+Recherche en temps reel par nom ou code-barres (scan camera)
+Ajout au panier
+Selection quantite, verification stock disponible, ajout instantane
+Gestion panier
+Modification quantite, suppression article, calcul total automatique
+Validation vente
+Confirmation avec resume, deduction automatique du stock en base
+Impression recu
+Generation PDF du recu ou partage via Bluetooth/WhatsApp
+Mode hors-ligne
+Mise en cache locale des ventes si pas de connexion, sync au retour en ligne
+5.3 Consultation Inventaire
+Fonctionnalite
+Description
+Liste medicaments
+Recherche et filtre, affichage du stock disponible en temps reel
+Detail medicament
+Fiche complete : stock, lots, expiration, prix, historique mouvements
+Scanner code-barres
+Acces direct a la fiche medicament via scan
+Filtre stock bas
+Vue filtree des medicaments sous le seuil d'alerte
+5.4 Gestion des entrees de stock
+Fonctionnalite
+Description
+Nouvelle entree
+Saisie : medicament, quantite, numero de lot, date expiration, fournisseur, prix achat
+Historique entrees
+Liste des approvisionnements avec details et possibilite de correction sous 1h
+Validation entree
+Confirmation requise avant mise a jour du stock
+5.5 Notifications Push
+Fonctionnalite
+Description
+Alerte stock bas
+Notification push quand un medicament passe sous le seuil d'alerte
+Alerte expiration
+Notification push 30 jours avant expiration d'un lot
+Confirmation vente
+Notification de confirmation apres chaque vente enregistree
+6. API REST Backend (NestJS)
+6.1 Architecture
+Architecture modulaire NestJS : AuthModule, MedicineModule, SaleModule, StockModule, UserModule, AlertModule
+Documentation Swagger auto-generee accessible via /api/docs
+Validation des donnees avec class-validator et class-transformer
+Gestion des erreurs centralisee via ExceptionFilter global
+Logging avec Winston : chaque requete loggee avec methode, path, status, duree
+6.2 Endpoints principaux
+Fonctionnalite
+Description
+POST /auth/login
+Connexion, retourne access_token et refresh_token
+POST /auth/refresh
+Regenere l'access_token via refresh_token valide
+POST /auth/logout
+Invalide le refresh_token
+GET /medicines
+Liste paginee avec filtres (nom, categorie, statut)
+POST /medicines
+Creation d'un medicament (Admin/Pharmacien)
+PUT /medicines/:id
+Mise a jour d'un medicament
+DELETE /medicines/:id
+Soft delete d'un medicament (Admin uniquement)
+GET /medicines/:id/lots
+Liste des lots d'un medicament avec dates d'expiration
+POST /stock/entry
+Enregistrer une entree de stock avec lot et expiration
+POST /sales
+Enregistrer une vente, decremente le stock automatiquement
+GET /sales
+Historique des ventes avec filtres date/caissier/medicament
+GET /alerts/low-stock
+Liste des medicaments sous seuil d'alerte
+GET /alerts/expiring
+Liste des lots expirant dans les N prochains jours
+GET /dashboard/stats
+KPIs agregés pour le tableau de bord
+GET /reports/monthly
+Rapport mensuel PDF (stream)
+6.3 Securite API
+JWT Guard sur toutes les routes protegees
+Role Guard avec decorateur @Roles() sur les endpoints sensibles
+Rate limiting : 100 requetes/minute par IP (nestjs-throttler)
+CORS configure pour les domaines frontend uniquement
+Helmet.js pour les headers de securite HTTP
+Validation stricte des DTOs - aucun champ non declare accepte
+7. Modele de donnees MongoDB
+7.1 Collections principales
+Fonctionnalite
+Description
+users
+Comptes utilisateurs : nom, email, passwordHash, role, actif, createdAt
+medicines
+Catalogue : nom, DCI, forme, dosage, categorie, prixVente, prixAchat, seuilAlerte, deletedAt
+lots
+Lots de stock : medicineId, numeroLot, quantite, dateExpiration, fournisseur, dateEntree
+sales
+Ventes : items[], total, caissierRef, horodatage, statut (valide/annule)
+saleItems
+Lignes de vente : saleRef, medicineRef, lotRef, quantite, prixUnitaire
+alerts
+Log des alertes : type (stock_bas/expiration), medicineRef, valeur, lu, createdAt
+activityLogs
+Journal : utilisateurRef, action, entite, entiteId, details, ip, createdAt
+8. Securite et bonnes pratiques
+Variables d'environnement via .env - aucune credential en dur dans le code
+JWT_SECRET de minimum 256 bits genere aleatoirement
+HTTPS obligatoire en production (certificat Let's Encrypt via Render/Railway)
+Soft delete uniquement - aucune suppression definitive de donnees critiques
+Toutes les entrees utilisateurs validees cote serveur (class-validator)
+Logs d'audit pour toute modification de stock ou annulation de vente
+Backup automatique MongoDB via Atlas ou script cron quotidien
+9. Plan de deploiement
+Fonctionnalite
+Description
+Backend NestJS
+Railway.app - Dockerfile fourni, variables d'env configurees dans le dashboard
+Frontend NextJS
+Vercel - connexion repo GitHub, deploiement automatique sur push main
+Base de donnees
+MongoDB Atlas - cluster gratuit M0, IP whitelistee Railway
+Application Flutter
+APK de demonstration genere (flutter build apk --release)
+Documentation API
+Swagger UI accessible publiquement sur /api/docs du backend deploye
+10. Planning de developpement (10 jours)
+Fonctionnalite
+Description
+Jours 1-2
+Setup environnement, initialisation NestJS + NextJS + Flutter, schema MongoDB, authModule + JWT complet
+Jours 3-4
+MedicineModule CRUD, LotModule, StockEntry, tests API Swagger, UI web inventaire
+Jours 5-6
+SaleModule, POS mobile Flutter, calcul stock temps reel, recu PDF
+Jour 7
+AlertModule, notifications push Flutter, emails alertes, dashboard KPIs
+Jour 8
+Rapport mensuel PDF, export Excel, UI admin complete, polish UI mobile
+Jour 9
+Tests end-to-end, correction bugs, deploiement production complet
+Jour 10
+Tests finaux, documentation technique, preparation slides presentation
+11. Livrables attendus
+Application web deploye (URL publique)
+APK Flutter fonctionnel
+Documentation Swagger deployee
+Documentation technique (ce document)
+Code source sur repository Git (README + instructions d'installation)
+Jeu de donnees de test pre-charge en base
+Presentation (slides) pour la soutenance du 16/03/2026
+12. Criteres d'evaluation
+Fonctionnalite
+Description
+Fonctionnalites metier
+Inventaire, expiration, ventes, alertes stock bas tous implementes et fonctionnels
+Qualite technique
+Code structure, modulaire, commenté, respect des patterns NestJS
+Securite
+JWT, roles, validation, HTTPS, pas de credentials exposes
+UI/UX
+Interface responsive web, navigation fluide mobile, lisibilite
+Deploiement
+Application accessible publiquement, pas de downtime pendant la demo
+Documentation API
+Swagger complet, tous les endpoints documentes avec exemples
+Presentation
+Demo en conditions reelles, maîtrise technique, reponses aux questions
+Document prepare par le Groupe 1 - CS27 Fullstack Intensive 2025-2026
+Derniere mise a jour : Mars 2026
