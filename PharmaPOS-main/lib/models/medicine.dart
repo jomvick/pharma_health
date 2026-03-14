@@ -22,6 +22,15 @@ class Medicine {
   });
 
   factory Medicine.fromJson(Map<String, dynamic> json) {
+    final batchesData = (json['lots'] as List?) ?? (json['batches'] as List?) ?? [];
+    final parsedBatches = batchesData.map((b) => Batch.fromJson(b)).toList();
+    
+    // Calcul du stock total à partir des lots si le champ direct est manquant ou à 0
+    int totalStock = (json['stock_quantity'] as int?) ?? (json['stock'] as int?) ?? 0;
+    if (totalStock == 0 && parsedBatches.isNotEmpty) {
+      totalStock = parsedBatches.fold(0, (sum, b) => sum + b.quantity);
+    }
+
     return Medicine(
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? json['nom'] ?? '',
@@ -30,12 +39,9 @@ class Medicine {
       category: json['category'] ?? json['categorie'] ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 
              (json['prixVente'] as num?)?.toDouble() ?? 0.0,
-      stock: json['stock_quantity'] ?? json['stock'] ?? 0,
+      stock: totalStock,
       minStock: json['min_threshold'] ?? json['seuilAlerte'] ?? json['minStock'] ?? 0,
-      batches: (json['batches'] as List?)
-              ?.map((b) => Batch.fromJson(b))
-              .toList() ??
-          [],
+      batches: parsedBatches,
     );
   }
 }

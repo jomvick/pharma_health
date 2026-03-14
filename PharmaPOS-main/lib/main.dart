@@ -13,6 +13,8 @@ import 'screens/medicine_detail_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/pos_screen.dart';
 import 'screens/stock_entry_screen.dart';
+import 'screens/clients_screen.dart';
+import 'screens/reports_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,8 +70,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddMedicineScreen(),
       ),
       GoRoute(
+        path: '/edit-medicine/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return AddMedicineScreen(medicineId: id);
+        },
+      ),
+      GoRoute(
         path: '/stock-entry',
         builder: (context, state) => const StockEntryScreen(),
+      ),
+      GoRoute(
+        path: '/clients',
+        builder: (context, state) => const ClientsScreen(),
+      ),
+      GoRoute(
+        path: '/reports',
+        builder: (context, state) => const ReportsScreen(),
       ),
     ],
     redirect: (context, state) {

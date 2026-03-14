@@ -7,7 +7,8 @@ import '../providers/medicine_provider.dart';
 import '../services/api_service.dart';
 
 class AddMedicineScreen extends ConsumerStatefulWidget {
-  const AddMedicineScreen({super.key});
+  final String? medicineId;
+  const AddMedicineScreen({super.key, this.medicineId});
 
   @override
   ConsumerState<AddMedicineScreen> createState() => _AddMedicineScreenState();
@@ -26,9 +27,44 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
   String? _selectedManufacturer;
   DateTime? _expirationDate;
   bool _isLoading = false;
+  bool _isEditMode = false;
 
   final List<String> _categories = ['Analgésiques', 'Antibiotiques', 'Vitamines', 'Antipaludéens', 'Cardiologie', 'Autres'];
   final List<String> _manufacturers = ['Sanofi', 'Pfizer', 'GSK', 'Bayer', 'Innotech', 'Local Lab'];
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditMode = widget.medicineId != null;
+    if (_isEditMode) {
+      _loadMedicineData();
+    }
+  }
+
+  Future<void> _loadMedicineData() async {
+    setState(() => _isLoading = true);
+    try {
+      final medicine = await ref.read(apiServiceProvider).getMedicineById(widget.medicineId!);
+      if (medicine != null) {
+        _nameController.text = medicine.name;
+        _barcodeController.text = medicine.barcode;
+        _priceController.text = medicine.price.toString();
+        _minStockController.text = medicine.minStock.toString();
+        _selectedCategory = _categories.contains(medicine.category) ? medicine.category : null;
+        _selectedManufacturer = _manufacturers.contains(medicine.manufacturer) ? medicine.manufacturer : null;
+        
+        if (medicine.batches.isNotEmpty) {
+          final expiry = medicine.batches.first.expiryDate;
+          _expirationDate = expiry;
+          _expirationController.text = '${expiry.day.toString().padLeft(2, '0')}/${expiry.month.toString().padLeft(2, '0')}/${expiry.year}';
+        }
+      }
+    } catch (e) {
+      print('Error loading medicine: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -89,17 +125,26 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
         };
 
         print('DEBUG: Sending medicine data: $medicineData');
-        final success = await apiService.createMedicine(medicineData);
+        
+        bool success;
+        if (_isEditMode) {
+          success = await apiService.updateMedicine(widget.medicineId!, medicineData);
+        } else {
+          success = await apiService.createMedicine(medicineData);
+        }
 
         if (!mounted) return;
         setState(() => _isLoading = false);
 
         if (success) {
           ref.invalidate(medicinesProvider);
+          if (_isEditMode) {
+            ref.invalidate(medicineProvider(widget.medicineId!));
+          }
           
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Médicament enregistré dans la base Atlas !'),
+            SnackBar(
+              content: Text(_isEditMode ? 'Médicament mis à jour !' : 'Médicament enregistré dans la base Atlas !'),
               backgroundColor: AppColors.success600,
               behavior: SnackBarBehavior.floating,
             ),
@@ -109,7 +154,7 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Échec de l\'enregistrement. Vérifiez votre connexion ou les données.'),
+              content: Text('Échec de l\'opération. Vérifiez votre connexion ou les données.'),
               backgroundColor: AppColors.alert500,
               behavior: SnackBarBehavior.floating,
             ),
@@ -138,33 +183,35 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => context.go('/inventory'),
+          onPressed: () => _isEditMode ? context.go('/medicine/${widget.medicineId}') : context.go('/inventory'),
         ),
-        title: const Text('Nouveau Médicament'),
+        title: Text(_isEditMode ? 'Modifier le Médicament' : 'Nouveau Médicament'),
         backgroundColor: AppColors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionHeader(LucideIcons.info, 'Informations Générales'),
-              _buildFormCard([
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Nom du médicament',
-                  hint: 'Ex: Doliprane 500mg',
-                  icon: LucideIcons.pill,
-                ),
-                _buildTextField(
-                  controller: _barcodeController,
-                  label: 'Code-barres',
-                  hint: 'Scanner ou saisir le code',
-                  icon: LucideIcons.qrCode,
-                ),
+      body: _isLoading && _isEditMode && _nameController.text.isEmpty
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader(LucideIcons.info, 'Informations Générales'),
+                  _buildFormCard([
+                    _buildTextField(
+                      controller: _nameController,
+                      label: 'Nom du médicament',
+                      hint: 'Ex: Doliprane 500mg',
+                      icon: LucideIcons.pill,
+                    ),
+                    _buildTextField(
+                      controller: _barcodeController,
+                      label: 'Code-barres',
+                      hint: 'Scanner ou saisir le code',
+                      icon: LucideIcons.qrCode,
+                    ),
                 _buildDropdown(
                   label: 'Catégorie',
                   value: _selectedCategory,

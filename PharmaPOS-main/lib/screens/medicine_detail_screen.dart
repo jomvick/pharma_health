@@ -21,8 +21,15 @@ class MedicineDetailScreen extends ConsumerWidget {
         title: const Text('Détail du médicament'),
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/inventory'),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.edit),
+            onPressed: () => context.go('/edit-medicine/$medicineId'),
+            tooltip: 'Modifier',
+          ),
+        ],
       ),
       body: medicineAsync.when(
         data: (medicine) {

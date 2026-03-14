@@ -76,13 +76,39 @@ export class MedicinesService {
     return savedMed;
   }
 
-  async update(id: string, data: Partial<Medicine>): Promise<MedicineDocument> {
+  async update(id: string, data: any): Promise<MedicineDocument> {
+    const mappedData: any = { ...data };
+    if (data.name) mappedData.nom = data.name;
+    if (data.category) mappedData.categorie = data.category;
+    if (data.price) mappedData.prixVente = data.price;
+    if (data.min_threshold) mappedData.seuilAlerte = data.min_threshold;
+    if (data.buying_price) mappedData.prixAchat = data.buying_price;
+
     const updated = await this.medicineModel.findOneAndUpdate(
       { _id: id, deletedAt: null },
-      data,
+      mappedData,
       { new: true }
     );
     if (!updated) throw new NotFoundException('Médicament introuvable');
+
+    // Mise à jour du stock via le lot initial si stock_quantity est fourni
+    if (data.stock_quantity !== undefined) {
+      const initialLot = await this.lotModel.findOne({ medicine: id, numeroLot: /^INITIAL-/ });
+      if (initialLot) {
+        initialLot.quantite = data.stock_quantity;
+        if (data.expiry_date) initialLot.dateExpiration = new Date(data.expiry_date);
+        await initialLot.save();
+      } else if (data.stock_quantity > 0) {
+        await new this.lotModel({
+          medicine: id,
+          numeroLot: 'INITIAL-' + Date.now().toString().slice(-6),
+          quantite: data.stock_quantity,
+          dateExpiration: data.expiry_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          prixAchat: data.buying_price || 0
+        }).save();
+      }
+    }
+
     return updated;
   }
 

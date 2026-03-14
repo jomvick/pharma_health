@@ -70,7 +70,7 @@ class AppDrawer extends ConsumerWidget {
                     icon: Icons.dashboard_outlined,
                     title: 'Tableau de bord',
                     onTap: () {
-                      context.pop();
+                      Navigator.of(context).pop();
                       context.go('/dashboard');
                     },
                   ),
@@ -79,7 +79,7 @@ class AppDrawer extends ConsumerWidget {
                   icon: Icons.point_of_sale,
                   title: 'Point de vente',
                   onTap: () {
-                    context.pop();
+                    Navigator.of(context).pop();
                     context.go('/pos');
                   },
                 ),
@@ -89,8 +89,27 @@ class AppDrawer extends ConsumerWidget {
                     icon: Icons.inventory_2_outlined,
                     title: 'Inventaire',
                     onTap: () {
-                      context.pop();
+                      Navigator.of(context).pop();
                       context.go('/inventory');
+                    },
+                  ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.people_outline,
+                  title: 'Clients',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.go('/clients');
+                  },
+                ),
+                if (role == UserRole.admin || role == UserRole.pharmacist)
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.bar_chart_outlined,
+                    title: 'Rapports',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/reports');
                     },
                   ),
                 const Divider(color: AppColors.border),

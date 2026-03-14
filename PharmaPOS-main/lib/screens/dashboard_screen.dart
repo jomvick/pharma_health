@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/medicine_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../models/user.dart';
@@ -16,57 +17,60 @@ class DashboardScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final role = authState.role;
 
-    // Mock data
-    const totalMedicines = 125;
-    const totalStock = 8590;
-    const lowStockCount = 12;
+    final medicinesAsync = ref.watch(medicinesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
       drawer: const AppDrawer(),
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context, role),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // KPI Section
-                  Row(
+      body: medicinesAsync.when(
+        data: (medicines) {
+          final totalMedicines = medicines.length;
+          final totalStock = medicines.fold<int>(0, (sum, m) => sum + m.stock);
+          final lowStockCount = medicines.where((m) => m.stock < m.minStock).length;
+
+          return CustomScrollView(
+            slivers: [
+              _buildAppBar(context, role),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: StatCard(
-                          label: 'Médicaments',
-                          value: totalMedicines.toString(),
-                          icon: LucideIcons.package,
-                          color: AppColors.primary500,
+                      // KPI Section
+                      Row(
+                        children: [
+                          Expanded(
+                            child: StatCard(
+                              label: 'Médicaments',
+                              value: totalMedicines.toString(),
+                              icon: LucideIcons.package,
+                              color: AppColors.primary500,
+                              onTap: () => context.go('/inventory'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: StatCard(
+                              label: 'Stock total',
+                              value: totalStock.toString(),
+                              icon: LucideIcons.layers,
+                              color: AppColors.secondary500,
+                              onTap: () => context.go('/inventory'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Alert Section
+                      if (lowStockCount > 0) ...[
+                        AlertBanner(
+                          count: lowStockCount,
                           onTap: () => context.go('/inventory'),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: StatCard(
-                          label: 'Stock total',
-                          value: totalStock.toString(),
-                          icon: LucideIcons.layers,
-                          color: AppColors.secondary500,
-                          onTap: () => context.go('/inventory'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Alert Section
-                  if (lowStockCount > 0) ...[
-                    AlertBanner(
-                      count: lowStockCount,
-                      onTap: () => context.go('/inventory'),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                        const SizedBox(height: 24),
+                      ],
 
                   // Quick Actions
                   const Text(
@@ -105,13 +109,13 @@ class DashboardScreen extends ConsumerWidget {
                           label: 'Client',
                           icon: LucideIcons.users,
                           color: AppColors.secondary500,
-                          onTap: () {},
+                          onTap: () => context.go('/clients'),
                         ),
                         QuickActionBtn(
                           label: 'Rapport',
                           icon: LucideIcons.fileBarChart,
                           color: AppColors.warning500,
-                          onTap: () {},
+                          onTap: () => context.go('/reports'),
                         ),
                       ],
                     ),
@@ -160,12 +164,15 @@ class DashboardScreen extends ConsumerWidget {
                     iconColor: AppColors.alert500,
                   ),
                   
-                  const SizedBox(height: 40),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Erreur: $error')),
       ),
     );
   }
