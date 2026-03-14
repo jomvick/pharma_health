@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../app_colors.dart';
 import '../providers/auth_provider.dart';
@@ -28,11 +27,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text;
     final password = _passwordController.text;
     ref.read(authProvider.notifier).login(email, password).then((_) {
-      GoRouter.of(context).go('/dashboard');
+      // Le routeur réactif s'occupera de la redirection automatique
     }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.toString()),
+            backgroundColor: AppColors.alert500,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     });
   }
 
@@ -41,73 +47,121 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.blue500, AppColors.blue700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      backgroundColor: AppColors.gray50,
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+          // Background Gradient (Header)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.45,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary700, AppColors.primary500],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo & En-tête
                 Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
                     color: AppColors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
+                        color: AppColors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: const Icon(
-                    LucideIcons.lock,
-                    color: AppColors.blue600,
-                    size: 40,
+                    LucideIcons.pill,
+                    color: AppColors.primary600,
+                    size: 48,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 const Text(
-                  'PharmaPOS',
+                  'PharmacyManager BF',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.white,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Gestion de pharmacie mobile',
+                Text(
+                  'Connectez-vous à votre espace',
                   style: TextStyle(
                     fontSize: 16,
-                    color: AppColors.blue100,
+                    color: AppColors.white.withOpacity(0.9),
                   ),
                 ),
-                const SizedBox(height: 32),
-                Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 48),
+
+                // Formulaire (Card)
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AppColors.shadowColor,
+                        blurRadius: 24,
+                        offset: Offset(0, 12),
+                      ),
+                    ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(32.0),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const Text(
+                          'Email',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.gray900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         _buildTextField(
                           controller: _emailController,
                           hintText: 'pharmacien@exemple.com',
                           icon: LucideIcons.mail,
                           keyboardType: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Mot de passe',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.gray900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         _buildTextField(
                           controller: _passwordController,
                           hintText: '••••••••',
@@ -117,32 +171,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             icon: Icon(
                               _showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
                               color: AppColors.gray400,
+                              size: 20,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _showPassword = !_showPassword;
-                              });
-                            },
+                            onPressed: () => setState(() => _showPassword = !_showPassword),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        authState.isLoading
-                            ? const CircularProgressIndicator()
-                            : ElevatedButton(
-                                onPressed: _login,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.blue600,
-                                  foregroundColor: AppColors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 32),
+                        
+                        // Bouton Connexion
+                        SizedBox(
+                          height: 52,
+                          child: authState.isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(color: AppColors.primary600),
+                                )
+                              : ElevatedButton(
+                                  onPressed: _login,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary600,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  minimumSize: const Size(double.infinity, 50),
+                                  child: const Text(
+                                    'Se connecter',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
                                 ),
-                                child: const Text('Se connecter'),
-                              ),
+                        ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Footer
+                const Text(
+                  'Une plateforme propulsée par CS27',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.gray400,
                   ),
                 ),
               ],
@@ -150,7 +222,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildTextField({
@@ -165,17 +239,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 15, color: AppColors.gray900),
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: Icon(icon, color: AppColors.gray400),
+        prefixIcon: Icon(icon, color: AppColors.gray400, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: AppColors.gray50,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary500, width: 1.5),
         ),
       ),
     );
   }
 }
+

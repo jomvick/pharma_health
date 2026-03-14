@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../app_colors.dart';
 import '../models/medicine.dart';
+import '../models/user.dart';
+import '../providers/auth_provider.dart';
 import '../providers/medicine_provider.dart';
 import '../widgets/medicine_card.dart';
+import '../widgets/app_drawer.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -38,9 +41,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   @override
   Widget build(BuildContext context) {
     final medicinesAsync = ref.watch(medicinesProvider);
+    final authState = ref.watch(authProvider);
+    final canAddMedicine = authState.role == UserRole.admin || authState.role == UserRole.pharmacist;
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Inventaire'),
         backgroundColor: AppColors.white,
@@ -86,11 +92,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: canAddMedicine ? FloatingActionButton(
         onPressed: () => context.go('/add-medicine'),
-        backgroundColor: AppColors.green600,
-        child: const Icon(LucideIcons.plus),
-      ),
+        backgroundColor: AppColors.success500,
+        child: const Icon(LucideIcons.plus, color: AppColors.white),
+      ) : null,
     );
   }
 
@@ -107,7 +113,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           });
         },
         backgroundColor: AppColors.gray100,
-        selectedColor: AppColors.blue600,
+        selectedColor: AppColors.primary600,
         labelStyle: TextStyle(
           color: isSelected ? AppColors.white : AppColors.gray900,
         ),

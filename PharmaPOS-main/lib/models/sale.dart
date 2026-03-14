@@ -15,15 +15,6 @@ class Sale extends Equatable {
     required this.date,
   });
 
-  factory Sale.fromJson(Map<String, dynamic> json) {
-    return Sale(
-      id: json['_id'] ?? json['id'] ?? '',
-      items: (json['items'] as List?)?.map((i) => CartItem.fromJson(i)).toList() ?? [],
-      total: (json['total'] ?? 0).toDouble(),
-      date: json['horodatage'] != null ? DateTime.parse(json['horodatage']) : DateTime.now(),
-    );
-  }
-
   @override
   List<Object?> get props => [id, items, total, date];
 }
@@ -36,21 +27,6 @@ class CartItem extends Equatable {
     required this.medicine,
     required this.quantity,
   });
-
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
-      medicine: Medicine.fromJson(json['medicineRef'] ?? json['medicine']),
-      quantity: json['quantite'] ?? json['quantity'] ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'medicine': medicine.id,
-      'quantite': quantity,
-      'prixUnitaire': medicine.price,
-    };
-  }
 
   @override
   List<Object?> get props => [medicine, quantity];

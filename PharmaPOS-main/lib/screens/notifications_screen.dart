@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../app_colors.dart';
 import '../models/alert.dart';
 import '../providers/alert_provider.dart';
 import '../widgets/alert_row.dart';
+import '../widgets/app_drawer.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -15,6 +15,7 @@ class NotificationsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Notifications'),
         backgroundColor: AppColors.white,
@@ -28,7 +29,11 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAlertList(BuildContext context, WidgetRef ref, List<Alert> alerts) {
+  Widget _buildAlertList(
+    BuildContext context,
+    WidgetRef ref,
+    List<Alert> alerts,
+  ) {
     if (alerts.isEmpty) {
       return const Center(child: Text('Aucune notification'));
     }

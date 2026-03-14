@@ -7,6 +7,7 @@ import '../models/medicine.dart';
 import '../providers/cart_provider.dart';
 import '../providers/medicine_provider.dart';
 import '../widgets/medicine_card.dart';
+import '../widgets/app_drawer.dart';
 
 class POSScreen extends ConsumerStatefulWidget {
   const POSScreen({super.key});
@@ -42,6 +43,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Point de Vente'),
         backgroundColor: AppColors.white,
@@ -76,7 +78,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               onPressed: () => _showCart(context),
               label: Text('${ref.watch(cartProvider.notifier).totalItems}'),
               icon: const Icon(LucideIcons.shoppingCart),
-              backgroundColor: AppColors.blue600,
+              backgroundColor: AppColors.primary600,
             )
           : null,
     );
@@ -191,7 +193,7 @@ class CartView extends ConsumerWidget {
                             ),
                             IconButton(
                               icon: const Icon(LucideIcons.trash2,
-                                  color: AppColors.red500),
+                                  color: AppColors.alert500),
                               onPressed: () => ref
                                   .read(cartProvider.notifier)
                                   .removeFromCart(cartItem.medicine.id),
@@ -275,9 +277,12 @@ class CartView extends ConsumerWidget {
                   icon: const Icon(LucideIcons.receipt),
                   label: const Text('Valider la vente'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.green600,
+                    backgroundColor: AppColors.success600,
                     foregroundColor: AppColors.white,
                     minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 )
               ],

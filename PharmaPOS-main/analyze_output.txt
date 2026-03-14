@@ -1,0 +1,35 @@
+Analyzing PharmaPOS-main...                                     
+
+   info • 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre • lib/main.dart:167:11 • deprecated_member_use
+  error • The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  • lib/main.dart:184:20 • argument_type_not_assignable
+   info • Don't invoke 'print' in production code • lib/providers/auth_provider.dart:55:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/providers/auth_provider.dart:58:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/providers/auth_provider.dart:67:9 • avoid_print
+  error • The getter 'blue600' isn't defined for the type 'AppColors' • lib/screens/add_medicine_screen.dart:139:46 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/dashboard_screen.dart:88:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/dashboard_screen.dart:109:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/dashboard_screen.dart:206:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/login_screen.dart:88:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/login_screen.dart:116:44 • deprecated_member_use
+  error • The getter 'orange100' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:62:24 • undefined_getter
+  error • Invalid constant value • lib/screens/medicine_detail_screen.dart:67:58 • invalid_constant
+  error • The getter 'orange600' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:67:68 • undefined_getter
+  error • Invalid constant value • lib/screens/medicine_detail_screen.dart:72:47 • invalid_constant
+  error • The getter 'orange600' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:72:57 • undefined_getter
+  error • The getter 'red600' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:110:45 • undefined_getter
+  error • The getter 'red100' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:170:40 • undefined_getter
+  error • Invalid constant value • lib/screens/medicine_detail_screen.dart:175:53 • invalid_constant
+  error • The getter 'red600' isn't defined for the type 'AppColors' • lib/screens/medicine_detail_screen.dart:175:63 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/pos_screen.dart:246:39 • deprecated_member_use
+  error • The getter 'blue600' isn't defined for the type 'AppColors' • lib/widgets/action_button.dart:15:28 • undefined_getter
+  error • The getter 'blue50' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:21:57 • undefined_getter
+  error • Invalid constant value • lib/widgets/alert_row.dart:27:41 • invalid_constant
+  error • The getter 'blue200' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:27:51 • undefined_getter
+  error • Invalid constant value • lib/widgets/alert_row.dart:72:28 • invalid_constant
+  error • The getter 'blue600' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:72:38 • undefined_getter
+  error • The getter 'orange500' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:89:27 • undefined_getter
+  error • The getter 'red500' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:93:27 • undefined_getter
+  error • The getter 'green500' isn't defined for the type 'AppColors' • lib/widgets/alert_row.dart:97:27 • undefined_getter
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/alert_row.dart:105:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/kpi_card.dart:41:32 • deprecated_member_use
+

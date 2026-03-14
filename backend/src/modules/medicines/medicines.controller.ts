@@ -3,6 +3,7 @@ import { MedicinesService } from './medicines.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CreateMedicineDto } from './dto/create-medicine.dto';
 
 @Controller('medicines')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,8 +32,8 @@ export class MedicinesController {
 
   @Post()
   @Roles('Admin', 'Pharmacien')
-  async create(@Body() body: any) {
-    const medicine = await this.medicinesService.create(body);
+  async create(@Body() createMedicineDto: CreateMedicineDto) {
+    const medicine = await this.medicinesService.create(createMedicineDto);
     return { success: true, message: 'Médicament créé avec succès.', medicine };
   }
 

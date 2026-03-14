@@ -1,93 +1,114 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:dio/dio.dart';
-import 'medicine_provider.dart';
+import '../services/api_service.dart';
+import '../models/user.dart';
+import 'token_provider.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final dio = ref.watch(dioProvider);
-  return AuthNotifier(dio);
+  final apiService = ref.watch(apiServiceProvider);
+  return AuthNotifier(apiService, ref);
 });
 
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
   final String? error;
-  final Map<String, dynamic>? user;
+  final String? token;
+  final UserRole? role;
 
-  AuthState({this.isAuthenticated = false, this.isLoading = false, this.error, this.user});
+  AuthState({
+    this.isAuthenticated = false, 
+    this.isLoading = false, 
+    this.error,
+    this.token,
+    this.role,
+  });
 
-  AuthState copyWith({bool? isAuthenticated, bool? isLoading, String? error, Map<String, dynamic>? user}) {
+  AuthState copyWith({
+    bool? isAuthenticated, 
+    bool? isLoading, 
+    String? error,
+    String? token,
+    UserRole? role,
+  }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
-      user: user ?? this.user,
+      token: token ?? this.token,
+      role: role ?? this.role,
     );
   }
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final Dio _dio;
+  final ApiService _apiService;
+  final Ref _ref;
   final _storage = const FlutterSecureStorage();
 
-  AuthNotifier(this._dio) : super(AuthState()) {
+  AuthNotifier(this._apiService, this._ref) : super(AuthState(isLoading: true)) {
     checkAuthStatus();
   }
 
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await _dio.post('/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final token = response.data['access_token'];
-        final userData = response.data['user'];
-
-        await _storage.write(key: 'jwt_token', value: token);
+      final response = await _apiService.login(email, password);
+      print('DEBUG: Login response: $response');
+      final token = response['access_token'];
+      final userRoleStr = response['user']?['role'] ?? response['role']; 
+      print('DEBUG: Extracted role string: $userRoleStr');
+      
+      if (token != null) {
+        await _storage.write(key: 'access_token', value: token);
+        if (userRoleStr != null) {
+          await _storage.write(key: 'user_role', value: userRoleStr);
+        }
         
+        final role = userRoleStr != null ? UserRole.fromString(userRoleStr) : null;
+        print('DEBUG: Assigned UserRole: $role');
+
         state = state.copyWith(
           isAuthenticated: true, 
           isLoading: false,
-          user: userData,
+          token: token,
+          role: role,
         );
+        _ref.read(tokenProvider.notifier).state = token;
+      } else {
+        throw 'Invalid response from server';
       }
-    } on DioException catch (e) {
-      final message = e.response?.data['message'] ?? 'Login failed';
-      state = state.copyWith(
-        isAuthenticated: false,
-        isLoading: false,
-        error: message is List ? message.join(', ') : message.toString(),
-      );
-      throw state.error!;
     } catch (e) {
       state = state.copyWith(
         isAuthenticated: false,
         isLoading: false,
-        error: 'An unexpected error occurred',
+        error: e.toString(),
       );
-      throw 'An unexpected error occurred';
+      rethrow;
     }
   }
 
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
-    await _storage.delete(key: 'jwt_token');
-    state = state.copyWith(isAuthenticated: false, isLoading: false, user: null);
+    await _storage.delete(key: 'access_token');
+    await _storage.delete(key: 'user_role');
+    _ref.read(tokenProvider.notifier).state = null;
+    state = state.copyWith(isAuthenticated: false, isLoading: false, token: null, role: null);
   }
 
   Future<void> checkAuthStatus() async {
     state = state.copyWith(isLoading: true);
-    final token = await _storage.read(key: 'jwt_token');
+    final token = await _storage.read(key: 'access_token');
+    final roleStr = await _storage.read(key: 'user_role');
+    
     if (token != null) {
-      try {
-        // Optionnel: On pourrait appeler un endpoint /auth/profile pour valider le token
-        state = state.copyWith(isAuthenticated: true, isLoading: false);
-      } catch (e) {
-        await logout();
-      }
+      state = state.copyWith(
+        isAuthenticated: true, 
+        isLoading: false, 
+        token: token,
+        role: roleStr != null ? UserRole.fromString(roleStr) : null,
+      );
+      _ref.read(tokenProvider.notifier).state = token;
     } else {
       state = state.copyWith(isAuthenticated: false, isLoading: false);
     }

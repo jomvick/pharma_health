@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import '../app_colors.dart';
 import '../models/medicine.dart';
 import '../providers/medicine_provider.dart';
 
@@ -26,9 +24,7 @@ class _StockEntryScreenState extends ConsumerState<StockEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Entrée de stock'),
-      ),
+      appBar: AppBar(title: const Text('Entrée de stock')),
       body: Stepper(
         currentStep: _currentStep,
         onStepContinue: () {
@@ -37,7 +33,9 @@ class _StockEntryScreenState extends ConsumerState<StockEntryScreen> {
               setState(() => _currentStep++);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Veuillez sélectionner un médicament')),
+                const SnackBar(
+                  content: Text('Veuillez sélectionner un médicament'),
+                ),
               );
             }
           } else if (_currentStep == 1) {
@@ -82,7 +80,7 @@ class _StockEntryScreenState extends ConsumerState<StockEntryScreen> {
     final medicinesAsync = ref.watch(medicinesProvider);
     return medicinesAsync.when(
       data: (medicines) => DropdownButtonFormField<Medicine>(
-        value: _selectedMedicine,
+        initialValue: _selectedMedicine,
         onChanged: (Medicine? newValue) {
           setState(() {
             _selectedMedicine = newValue;
@@ -119,7 +117,9 @@ class _StockEntryScreenState extends ConsumerState<StockEntryScreen> {
           ),
           TextFormField(
             controller: _expiryDateController,
-            decoration: const InputDecoration(labelText: 'Date d\'expiration (YYYY-MM-DD)') ,
+            decoration: const InputDecoration(
+              labelText: 'Date d\'expiration (YYYY-MM-DD)',
+            ),
             validator: (value) => value!.isEmpty ? 'Champ requis' : null,
           ),
           TextFormField(
@@ -129,7 +129,9 @@ class _StockEntryScreenState extends ConsumerState<StockEntryScreen> {
           ),
           TextFormField(
             controller: _purchasePriceController,
-            decoration: const InputDecoration(labelText: 'Prix d\'achat unitaire'),
+            decoration: const InputDecoration(
+              labelText: 'Prix d\'achat unitaire',
+            ),
             keyboardType: TextInputType.number,
             validator: (value) => value!.isEmpty ? 'Champ requis' : null,
           ),

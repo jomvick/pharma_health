@@ -4,136 +4,163 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../app_colors.dart';
 import '../providers/auth_provider.dart';
-import '../widgets/kpi_card.dart';
+import '../widgets/app_drawer.dart';
+import '../widgets/dashboard_widgets.dart';
+import '../models/user.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Mock data for the dashboard
+    final authState = ref.watch(authProvider);
+    final role = authState.role;
+
+    // Mock data
     const totalMedicines = 125;
     const totalStock = 8590;
     const lowStockCount = 12;
-    const unreadAlerts = 5;
-
-    final stats = [
-      {
-        'label': 'Médicaments',
-        'value': totalMedicines.toString(),
-        'icon': LucideIcons.package,
-        'color': AppColors.blue500,
-        'action': () => GoRouter.of(context).go('/inventory')
-      },
-      {
-        'label': 'Stock total',
-        'value': totalStock.toString(),
-        'icon': LucideIcons.trendingUp,
-        'color': AppColors.green500,
-        'action': () => GoRouter.of(context).go('/inventory')
-      },
-      {
-        'label': 'Alertes stock',
-        'value': lowStockCount.toString(),
-        'icon': LucideIcons.alertTriangle,
-        'color': AppColors.orange500,
-        'action': () => GoRouter.of(context).go('/inventory')
-      },
-      {
-        'label': 'Notifications',
-        'value': unreadAlerts.toString(),
-        'icon': LucideIcons.bell,
-        'color': AppColors.red500,
-        'action': () => GoRouter.of(context).go('/notifications')
-      }
-    ];
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
+      drawer: const AppDrawer(),
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            backgroundColor: AppColors.blue600,
-            foregroundColor: AppColors.white,
-            pinned: true,
-            expandedHeight: 150.0,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              title: const Text('Tableau de bord'),
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.blue600, AppColors.blue700],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(LucideIcons.logOut),
-                onPressed: () {
-                  ref.read(authProvider.notifier).logout();
-                  GoRouter.of(context).go('/login');
-                },
-              ),
-            ],
-          ),
+          _buildAppBar(context, role),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                    ),
-                    itemCount: stats.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final stat = stats[index];
-                      return KpiCard(
-                        label: stat['label'] as String,
-                        value: stat['value'] as String,
-                        icon: stat['icon'] as IconData,
-                        color: stat['color'] as Color,
-                        onTap: stat['action'] as VoidCallback,
-                      );
-                    },
+                  // KPI Section
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatCard(
+                          label: 'Médicaments',
+                          value: totalMedicines.toString(),
+                          icon: LucideIcons.package,
+                          color: AppColors.primary500,
+                          onTap: () => context.go('/inventory'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: StatCard(
+                          label: 'Stock total',
+                          value: totalStock.toString(),
+                          icon: LucideIcons.layers,
+                          color: AppColors.secondary500,
+                          onTap: () => context.go('/inventory'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
+                  
+                  // Alert Section
+                  if (lowStockCount > 0) ...[
+                    AlertBanner(
+                      count: lowStockCount,
+                      onTap: () => context.go('/inventory'),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Quick Actions
                   const Text(
-                    'Actions rapides',
+                    'Actions Rapides',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.gray900,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildQuickActionCard(
-                    context,
-                    label: 'Nouvelle vente',
-                    description: 'Point de vente',
-                    icon: LucideIcons.shoppingCart,
-                    color: AppColors.blue600,
-                    onTap: () => GoRouter.of(context).go('/pos'),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.gray200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        QuickActionBtn(
+                          label: 'Vente',
+                          icon: LucideIcons.shoppingCart,
+                          color: AppColors.primary600,
+                          onTap: () => context.go('/pos'),
+                        ),
+                        QuickActionBtn(
+                          label: 'Stock',
+                          icon: LucideIcons.packagePlus,
+                          color: AppColors.success500,
+                          onTap: () => context.go('/inventory'),
+                        ),
+                        QuickActionBtn(
+                          label: 'Client',
+                          icon: LucideIcons.users,
+                          color: AppColors.secondary500,
+                          onTap: () {},
+                        ),
+                        QuickActionBtn(
+                          label: 'Rapport',
+                          icon: LucideIcons.fileBarChart,
+                          color: AppColors.warning500,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Recent Activity
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Activités Récentes',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.gray900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text('Voir tout'),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
-                  _buildQuickActionCard(
-                    context,
-                    label: 'Consulter stock',
-                    description: 'Inventaire',
-                    icon: LucideIcons.package,
-                    color: AppColors.purple600,
-                    onTap: () => GoRouter.of(context).go('/inventory'),
+                  const ActivityTile(
+                    title: 'Vente #9382',
+                    subtitle: 'Paratécamaol, Amoxicilline (+2)',
+                    time: 'Il y a 2 min',
+                    icon: LucideIcons.receipt,
+                    iconColor: AppColors.primary500,
                   ),
+                  const ActivityTile(
+                    title: 'Réapprovisionnement',
+                    subtitle: 'Doliprane 500mg (10 boites)',
+                    time: 'Il y a 15 min',
+                    icon: LucideIcons.packagePlus,
+                    iconColor: AppColors.success500,
+                  ),
+                  const ActivityTile(
+                    title: 'Alerte Stock Bas',
+                    subtitle: 'Efferalgan 1g',
+                    time: 'Il y a 1h',
+                    icon: LucideIcons.alertTriangle,
+                    iconColor: AppColors.alert500,
+                  ),
+                  
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -143,54 +170,59 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActionCard(
-    BuildContext context, {
-    required String label,
-    required String description,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 0,
-      color: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
+  Widget _buildAppBar(BuildContext context, UserRole? role) {
+    return SliverAppBar(
+      backgroundColor: AppColors.primary600,
+      foregroundColor: AppColors.white,
+      pinned: true,
+      expandedHeight: 140.0,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.bottomLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+              const Text(
+                'Bonjour 👋',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white70,
                 ),
-                child: Icon(icon, color: AppColors.white, size: 24),
               ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.white.withOpacity(0.8),
-                    ),
-                  ),
-                ],
+              Text(
+                role == UserRole.admin ? 'Administrateur' : 
+                role == UserRole.pharmacist ? 'Pharmacien' : 'Caissier',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary600, AppColors.primary700],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: Icon(
+                  LucideIcons.stethoscope,
+                  size: 160,
+                  color: AppColors.white.withOpacity(0.1),
+                ),
               ),
             ],
           ),

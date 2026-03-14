@@ -1,43 +1,68 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alert.dart';
-import 'medicine_provider.dart';
-import '../services/api_service.dart';
 
 final alertsProvider =
     StateNotifierProvider<AlertsNotifier, AsyncValue<List<Alert>>>((ref) {
-      final dio = ref.watch(dioProvider);
-      return AlertsNotifier(dio);
+      return AlertsNotifier();
     });
 
 class AlertsNotifier extends StateNotifier<AsyncValue<List<Alert>>> {
-  final Dio _dio;
-
-  AlertsNotifier(this._dio) : super(const AsyncValue.loading()) {
-    fetchAlerts();
+  AlertsNotifier() : super(const AsyncValue.loading()) {
+    _fetchAlerts();
   }
 
-  Future<void> fetchAlerts() async {
-    state = const AsyncValue.loading();
-    try {
-      final response = await _dio.get('/alerts');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? [];
-        final alerts = data.map((json) => Alert.fromJson(json)).toList();
-        state = AsyncValue.data(alerts);
-      }
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+  final List<Alert> _alerts = mockAlerts;
+
+  Future<void> _fetchAlerts() async {
+    await Future.delayed(const Duration(seconds: 1));
+    state = AsyncValue.data(_alerts);
   }
 
-  Future<void> markAsRead(String alertId) async {
-    try {
-      await _dio.patch('/alerts/$alertId/read');
-      // Refresh list after marking as read
-      await fetchAlerts();
-    } catch (e) {
-      print('Error marking alert as read: $e');
-    }
+  void markAsRead(String alertId) {
+    state.whenData((alerts) {
+      final updatedAlerts = alerts.map((alert) {
+        if (alert.id == alertId) {
+          return Alert(
+            id: alert.id,
+            title: alert.title,
+            message: alert.message,
+            date: alert.date,
+            type: alert.type,
+            read: true,
+            medicineId: alert.medicineId,
+          );
+        }
+        return alert;
+      }).toList();
+      state = AsyncValue.data(updatedAlerts);
+    });
   }
 }
+
+final mockAlerts = [
+  Alert(
+    id: '1',
+    title: 'Stock bas',
+    message: 'Le stock de Paracétamol 500mg est bas (35 restants).',
+    date: DateTime.now().subtract(const Duration(minutes: 30)),
+    type: AlertType.lowStock,
+    medicineId: '1',
+  ),
+  Alert(
+    id: '2',
+    title: 'Expiration proche',
+    message: 'Un lot d\'Amoxicilline 1g expire dans 25 jours.',
+    date: DateTime.now().subtract(const Duration(hours: 2)),
+    type: AlertType.expiry,
+    medicineId: '2',
+    read: true,
+  ),
+  Alert(
+    id: '3',
+    title: 'Vente',
+    message: 'Vente de 2 boîtes de Ibuprofène 400mg.',
+    date: DateTime.now().subtract(const Duration(days: 1)),
+    type: AlertType.sale,
+    medicineId: '3',
+  ),
+];
